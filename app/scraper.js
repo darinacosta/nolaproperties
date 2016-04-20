@@ -2,11 +2,12 @@ var assert = require('assert'),
     asyncHelper = require('./helpers/asyncHelper.js'),
     cheerio = require("cheerio"),
     csv = require("csv"),
+    csvParser = csv.parse();
     fs = require('fs'),
     json2csv = require('json2csv'),
     http = require("http"),
     MongoClient = require('mongodb').MongoClient,
-    assessorDb = 'mongodb://localhost:27017/assessordata',
+    mongoUrl = 'mongodb://localhost:27017/',
     Q = require("q");
 
 module.exports = (function() {
@@ -14,7 +15,9 @@ module.exports = (function() {
     var scraper = this;
 
     scraper.config = {
-    	baseUrl: "http://qpublic9.qpublic.net/la_orleans_display.php",
+    	baseUrl: 'http://qpublic9.qpublic.net/la_orleans_display.php',
+      addresses: '../public_data/jpnsi_addresses_complete_v1.csv',
+      db: mongoUrl + 'assessordata',
     	sampleQuery: "?KEY=3609-IBERVILLEST",
     	sampleAddress: {
     		number: "825",
@@ -39,13 +42,27 @@ module.exports = (function() {
     scraper.problemAddresses = [];
 
     scraper.init = function() {
-      var addressObjects = scraper.buildAddressObjectArray(scraper.config.sampleAddresses);
-      scraper.urls = scraper.generateUrlQueryArray(addressObjects);
-      var numberOfLoops = scraper.urls.length;
-      console.log('\nInitializing collection of (' + numberOfLoops + ') records...')
-      asyncHelper.syncLoop(numberOfLoops,
-        scraper.loop,
-        scraper.complete);
+      var addresses = scraper.getAddresses()
+      .then(function(addresses){
+        var locationObjects = scraper.buildLocationObjectArray(addresses);
+        scraper.urls = scraper.generateUrlQueryArray(locationObjects);
+        var numberOfLoops = scraper.urls.length;
+        console.log('\nInitializing collection of (' + numberOfLoops + ') records...')
+        asyncHelper.syncLoop(numberOfLoops,
+          scraper.loop,
+          scraper.complete);
+
+      });
+    };
+
+    scraper.getAddresses = function(){
+      var defer = Q.defer();
+      fs.readFile(scraper.config.addresses, function(err, data){
+        csv.parse(data, function(err, csvData){
+          defer.resolve(csvData);
+        });
+      });
+      return defer.promise;
     };
 
     scraper.loop = function(loop){
@@ -62,7 +79,7 @@ module.exports = (function() {
           } else {
             var problemAddress = scraper.urls[i].split("?KEY=")[1];
             scraper.problemAddresses.push(problemAddress)
-            console.log('    x ' + problemAddress + ' was not scraped.Check that the address exists in the assessor database.');
+            console.log('    x ' + problemAddress + ' was not scraped. Ensure that the address exists in the assessor database.');
             loop.next();
           }
         }
@@ -71,7 +88,7 @@ module.exports = (function() {
 
     scraper.insertFeatureIntoDb = function(feature){
       var defer = Q.defer();
-      MongoClient.connect(assessorDb, function(e, db) {
+      MongoClient.connect(scraper.config.db, function(e, db) {
 
         function _addNewFeature(feature){
           db.collection('features').insert(feature, function(e, records) {
@@ -112,18 +129,21 @@ module.exports = (function() {
       }
     };
 
-    scraper.buildAddressObjectArray = function(addresses) {
-      var addressObjectArray = [];
-      for (var i =0; i < addresses.length; i ++) {
-        var addressStringArray = addresses[i].split(/([0-9]+)/);
+    scraper.buildLocationObjectArray = function(addresses) {
+      var locationObjectArray = [];
+      for (var i = 1; i < addresses.length; i ++) { //skip the header row
+        var addressStringArray = addresses[i][0].split(/([0-9]+)/);
         var addressNumber = addressStringArray[1];
         var addressStreet = addressStringArray[2];
-        addressObjectArray.push({
+        var locationObject = {
           number: addressNumber.trim(),
-          street: addressStreet.trim()
-        });
+          street: addressStreet.trim(),
+          x: addresses[1],
+          y: addresses[2]
+        }
+        locationObjectArray.push(locationObject);
       }
-      return addressObjectArray;
+      return locationObjectArray;
     };
 
     scraper.download = function(url) {
