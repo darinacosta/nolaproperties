@@ -16,7 +16,7 @@ module.exports = (function() {
 
     scraper.config = {
     	baseUrl: 'http://qpublic9.qpublic.net/la_orleans_display.php',
-      addresses: '../public_data/jpnsi_addresses_complete_v1.csv',
+      addresses: './public_data/jpnsi_addresses_complete_v1.csv',
       db: mongoUrl + 'assessordata',
     	sampleQuery: "?KEY=3609-IBERVILLEST",
     	sampleAddress: {
@@ -44,6 +44,7 @@ module.exports = (function() {
     scraper.init = function() {
       var addresses = scraper.getAddresses()
       .then(function(addresses){
+        console.log(addresses);
         var locationObjects = scraper.buildLocationObjectArray(addresses);
         scraper.urls = scraper.generateUrlQueryArray(locationObjects);
         var numberOfLoops = scraper.urls.length;
@@ -58,7 +59,9 @@ module.exports = (function() {
     scraper.getAddresses = function(){
       var defer = Q.defer();
       fs.readFile(scraper.config.addresses, function(err, data){
+        if (err){ console.log(err); }
         csv.parse(data, function(err, csvData){
+          if (err){ console.log(err); }
           defer.resolve(csvData);
         });
       });
