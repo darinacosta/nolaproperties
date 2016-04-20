@@ -1,12 +1,13 @@
-var cheerio = require("cheerio");
-var csv = require("csv");
-var fs = require('fs');
-var json2csv = require('json2csv');
-var asyncHelper = require('./helpers/asyncHelper.js');
-var http = require("http");
-var Q = require("q");
-
-var addressSample = require('../data/jpnsi_address_sample.js');
+var assert = require('assert'),
+    asyncHelper = require('./helpers/asyncHelper.js'),
+    cheerio = require("cheerio"),
+    csv = require("csv"),
+    fs = require('fs'),
+    json2csv = require('json2csv'),
+    http = require("http"),
+    MongoClient = require('mongodb').MongoClient,
+    assessorDb = 'mongodb://localhost:27017/assessordata',
+    Q = require("q");
 
 module.exports = (function() {
 
@@ -16,14 +17,100 @@ module.exports = (function() {
     	baseUrl: "http://qpublic9.qpublic.net/la_orleans_display.php",
     	sampleQuery: "?KEY=3609-IBERVILLEST",
     	sampleAddress: {
-    		number: "3609",
-    		street: "IBERVILLE ST"
+    		number: "825",
+    		street: "N PRIEUR ST"
     	},
-      sampleAddresses: addressSample.sample_addresses,
+      sampleAddresses: [
+        '825 N PRIEUR ST',
+        '829 N PRIEUR ST',
+        '910 N PRIEUR ST',
+        '128 N JOHNSON ST',
+        '327 N ROMAN ST',
+        '1936 CONTI ST',
+        '2111 CONTI ST',
+        '313 N JOHNSON ST',
+        '2137 URSULINES AVE'
+      ],
       writeFile: './properties.json'
     };
 
     scraper.entries = [];
+    scraper.urls = [];
+    scraper.problemAddresses = [];
+
+    scraper.init = function() {
+      var addressObjects = scraper.buildAddressObjectArray(scraper.config.sampleAddresses);
+      scraper.urls = scraper.generateUrlQueryArray(addressObjects);
+      var numberOfLoops = scraper.urls.length;
+      console.log('\nInitializing collection of (' + numberOfLoops + ') records...')
+      asyncHelper.syncLoop(numberOfLoops,
+        scraper.loop,
+        scraper.complete);
+    };
+
+    scraper.loop = function(loop){
+      var i = loop.iteration();
+      console.log(' ' + i + '. ' + scraper.urls[i])
+      scraper.download(scraper.urls[i])
+      .then(function(html){
+        if (html !== undefined && html !== null) {
+          feature = scraper.buildFeature(html);
+          feature['url'] = scraper.urls[i];
+          if (feature.property.taxBillNumber) {
+            scraper.insertFeatureIntoDb(feature)
+            .then(loop.next);
+          } else {
+            var problemAddress = scraper.urls[i].split("?KEY=")[1];
+            scraper.problemAddresses.push(problemAddress)
+            console.log('    x ' + problemAddress + ' was not scraped.Check that the address exists in the assessor database.');
+            loop.next();
+          }
+        }
+      });
+    };
+
+    scraper.insertFeatureIntoDb = function(feature){
+      var defer = Q.defer();
+      MongoClient.connect(assessorDb, function(e, db) {
+
+        function _addNewFeature(feature){
+          db.collection('features').insert(feature, function(e, records) {
+            console.log('    + ' + feature.property.locationAddress + ' entered into database.')
+            assert.equal(e, null);
+            db.close();
+            defer.resolve();
+          });
+        };
+
+        if (db === null){
+          console.log('Bad database connection.')
+          defer.resolve();
+        }
+        db.collection('features').find({"url" : feature.url}).toArray(function(e, docs){
+          assert.equal(e, null);
+          if (docs.length === 0){
+            _addNewFeature(feature);
+          } else {
+            defer.resolve();
+            console.log('    - ' + feature.property.locationAddress + ' already exists in database.')
+          }
+        });
+      });
+      return defer.promise;
+    };
+
+    scraper.complete = function(){
+      fs.writeFile(config.writeFile, JSON.stringify(entries));
+      console.log("=======================================================");
+      if (scraper.problemAddresses.length === 0) {
+        console.log('All addresses were verified');
+      } else {
+        var addressPlural = scraper.problemAddresses.length === 1 ? 'address' : 'addresses';
+        console.log('The following (' + scraper.problemAddresses.length + ') '
+          + addressPlural + ' could not be verified: \n'
+          + JSON.stringify(scraper.problemAddresses))
+      }
+    };
 
     scraper.buildAddressObjectArray = function(addresses) {
       var addressObjectArray = [];
@@ -40,24 +127,23 @@ module.exports = (function() {
     };
 
     scraper.download = function(url) {
-        var defer = Q.defer();
-        http.get(url, function(res) {
-            var data = "";
-            res.on('data', function (chunk) {
-                data += chunk;
-            });
-            res.on("end", function() {
-                defer.resolve(data);
-            });
-        }).on("error", function() {
-            console.log('Unable to retrieve requested HTML for: ' + url);
-            defer.resolve();
+      var defer = Q.defer();
+      http.get(url, function(res) {
+        var data = "";
+        res.on('data', function (chunk) {
+            data += chunk;
         });
-        return defer.promise;
+        res.on("end", function() {
+            defer.resolve(data);
+        });
+      }).on("error", function() {
+        console.log('Unable to retrieve requested HTML for: ' + url);
+        defer.resolve();
+      });
+      return defer.promise;
     };
 
     scraper.generateUrlQueryArray = function(addressObjArray){
-      console.log('Generating query array...');
       var queryStringArray = []
       for (var i = 0; i < addressObjArray.length; i ++){
       	var queryString = scraper.config.baseUrl + "?KEY=";
@@ -75,11 +161,11 @@ module.exports = (function() {
       return queryStringArray;
     };
 
-    scraper.scrape = function(html){
+    scraper.buildFeature = function(html){
       var $ = cheerio.load(html),
+      feature = {},
       value = {},
       propertyInformation = {},
-      entry = {},
       firstListedYear, secondListedYear, thirdListedYear;
       /*
         value - First Listed Year - .tax_value 0 - 8
@@ -135,36 +221,29 @@ module.exports = (function() {
       propertyInformation['propertyClass'] = $('.owner_value').eq(6).text().trim();
       propertyInformation['sqFt'] = $('.owner_value').eq(9).text().trim();
 
-      entry = {
+      feature = {
         value: value,
-        propertyInformation: propertyInformation
+        property: propertyInformation
       };
 
-      scraper.entries.push(entry);
-      return;
+      return feature;
     };
 
-    scraper.test = function() {
-      var addressObjects = scraper.buildAddressObjectArray(scraper.config.sampleAddresses);
-      var urls = scraper.generateUrlQueryArray(addressObjects);
+    scraper.testDb = function(){
+      MongoClient.connect(mongoUrl, {
+         db: {
+           raw: true
+         },
+         server: {
+           poolSize: 10
+         }
+       }, function(err, db) {
+       assert.equal(null, err);
+       console.log("Connected correctly to server");
 
-      console.log('URLS LENGTH: ' + urls.length);
+       db.close();
+     });
+   };
 
-      asyncHelper.syncLoop(urls.length, function(loop){
-          var i = loop.iteration();
-          scraper.download(urls[i])
-          .then(function(html){
-            if (html !== undefined && html !== null) {
-              console.log(i + '. Successfully downloaded HTML for: ' + urls[i]);
-              scraper.scrape(html);
-            }
-            loop.next();
-          });
-      }, function(){
-        fs.writeFile(config.writeFile, JSON.stringify(entries));
-        console.log("done");
-      });
-    }
-
-    return scraper;
+   return scraper;
 })();
