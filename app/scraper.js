@@ -220,7 +220,7 @@ module.exports = (function() {
         value - First Listed Year - .tax_value 0 - 8
       */
       firstListedYear = $('.tax_value').eq(0).text().replace(/ /g,'').trim();
-      if (/20*/.test(firstListedYear)){
+      if (/^20*/.test(firstListedYear) == true){
         value[firstListedYear] = {};
         value[firstListedYear]['landValue'] = $('.tax_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
         value[firstListedYear]['buildingValue'] = $('.tax_value').eq(2).text().replace(/ |\.|,|\$/g,'').trim();
@@ -236,7 +236,7 @@ module.exports = (function() {
         value - Second Listed Year - .tax_value 13 - 25
       */
       secondListedYear = $('.tax_value').eq(13).text().replace(/ /g,'').trim();
-      if (/20*/.test(secondListedYear)){
+      if (/^20*/.test(secondListedYear) == true){
         value[secondListedYear] = {};
         value[secondListedYear]['landValue'] = $('.tax_value').eq(14).text().replace(/ |\.|,|\$/g,'').trim();
         value[secondListedYear]['buildingValue'] = $('.tax_value').eq(15).text().replace(/ |\.|,|\$/g,'').trim();
@@ -253,7 +253,7 @@ module.exports = (function() {
       */
 
       thirdListedYear = $('.tax_value').eq(26).text().replace(/ /g,'').trim();
-      if (/20*/.test(secondListedYear)){
+      if (/^20*/.test(secondListedYear) == true){
         value[thirdListedYear] = {};
         value[thirdListedYear]['landValue'] = $('.tax_value').eq(27).text().replace(/ |\.|,|\$/g,'').trim();
         value[thirdListedYear]['buildingValue'] = $('.tax_value').eq(28).text().replace(/ |\.|,|\$/g,'').trim();
@@ -276,6 +276,7 @@ module.exports = (function() {
       propertyInformation['propertyClass'] = $('.owner_value').eq(6).text().trim();
       propertyInformation['sqFt'] = $('.owner_value').eq(9).text().trim();
 
+
       newFeature = {
         value: value,
         property: propertyInformation,
@@ -286,6 +287,7 @@ module.exports = (function() {
         },
         url: feature.url
       };
+
       return newFeature;
 
     };
