@@ -114,17 +114,17 @@ module.exports = (function() {
         if (db === null){
           console.log('Bad database connection.')
           defer.resolve('error');
+        } else {
+          db.collection('features').find({"url" : url}).toArray(function(e, docs){
+            assert.equal(e, null);
+            if (docs.length === 0){
+              defer.resolve(false);
+              defer.resolve();
+            } else {
+              defer.resolve(true);
+            }
+          });
         }
-
-        db.collection('features').find({"url" : url}).toArray(function(e, docs){
-          assert.equal(e, null);
-          if (docs.length === 0){
-            defer.resolve(false);
-            defer.resolve();
-          } else {
-            defer.resolve(true);
-          }
-        });
       });
       return defer.promise;
     };
