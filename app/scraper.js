@@ -220,44 +220,50 @@ module.exports = (function() {
         value - First Listed Year - .tax_value 0 - 8
       */
       firstListedYear = $('.tax_value').eq(0).text().replace(/ /g,'').trim();
-      value[firstListedYear] = {};
-      value[firstListedYear]['landValue'] = $('.tax_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['buildingValue'] = $('.tax_value').eq(2).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['totalValue'] = $('.tax_value').eq(3).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['assessedLandValue'] = $('.tax_value').eq(4).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['assessedBuildingValue'] = $('.tax_value').eq(5).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['totalAssessedValue'] = $('.tax_value').eq(6).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(7).text().replace(/ |\.|,|\$/g,'').trim();
-      value[firstListedYear]['taxablevalue'] = $('.tax_value').eq(8).text().replace(/ |\.|,|\$/g,'').trim();
+      if (/20*/.test(firstListedYear)){
+        value[firstListedYear] = {};
+        value[firstListedYear]['landValue'] = $('.tax_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['buildingValue'] = $('.tax_value').eq(2).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['totalValue'] = $('.tax_value').eq(3).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['assessedLandValue'] = $('.tax_value').eq(4).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['assessedBuildingValue'] = $('.tax_value').eq(5).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['totalAssessedValue'] = $('.tax_value').eq(6).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(7).text().replace(/ |\.|,|\$/g,'').trim();
+        value[firstListedYear]['taxablevalue'] = $('.tax_value').eq(8).text().replace(/ |\.|,|\$/g,'').trim();
+      }
 
       /*
         value - Second Listed Year - .tax_value 13 - 25
       */
       secondListedYear = $('.tax_value').eq(13).text().replace(/ /g,'').trim();
-      value[secondListedYear] = {};
-      value[secondListedYear]['landValue'] = $('.tax_value').eq(14).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['buildingValue'] = $('.tax_value').eq(15).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['totalValue'] = $('.tax_value').eq(16).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['assessedLandValue'] = $('.tax_value').eq(17).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['assessedBuildingValue'] = $('.tax_value').eq(18).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['totalAssessedValue'] = $('.tax_value').eq(19).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(20).text().replace(/ |\.|,|\$/g,'').trim();
-      value[secondListedYear]['taxablevalue'] = $('.tax_value').eq(21).text().replace(/ |\.|,|\$/g,'').trim();
+      if (/20*/.test(secondListedYear)){
+        value[secondListedYear] = {};
+        value[secondListedYear]['landValue'] = $('.tax_value').eq(14).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['buildingValue'] = $('.tax_value').eq(15).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['totalValue'] = $('.tax_value').eq(16).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['assessedLandValue'] = $('.tax_value').eq(17).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['assessedBuildingValue'] = $('.tax_value').eq(18).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['totalAssessedValue'] = $('.tax_value').eq(19).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(20).text().replace(/ |\.|,|\$/g,'').trim();
+        value[secondListedYear]['taxablevalue'] = $('.tax_value').eq(21).text().replace(/ |\.|,|\$/g,'').trim();
+      }
 
       /*
         value - Third Listed Year - .tax_value 26 - 39
       */
 
       thirdListedYear = $('.tax_value').eq(26).text().replace(/ /g,'').trim();
-      value[thirdListedYear] = {};
-      value[thirdListedYear]['landValue'] = $('.tax_value').eq(27).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['buildingValue'] = $('.tax_value').eq(28).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['totalValue'] = $('.tax_value').eq(29).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['assessedLandValue'] = $('.tax_value').eq(30).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['assessedBuildingValue'] = $('.tax_value').eq(31).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['totalAssessedValue'] = $('.tax_value').eq(32).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(33).text().replace(/ |\.|,|\$/g,'').trim();
-      value[thirdListedYear]['taxablevalue'] = $('.tax_value').eq(34).text().replace(/ |\.|,|\$/g,'').trim();
+      if (/20*/.test(secondListedYear)){
+        value[thirdListedYear] = {};
+        value[thirdListedYear]['landValue'] = $('.tax_value').eq(27).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['buildingValue'] = $('.tax_value').eq(28).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['totalValue'] = $('.tax_value').eq(29).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['assessedLandValue'] = $('.tax_value').eq(30).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['assessedBuildingValue'] = $('.tax_value').eq(31).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['totalAssessedValue'] = $('.tax_value').eq(32).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(33).text().replace(/ |\.|,|\$/g,'').trim();
+        value[thirdListedYear]['taxablevalue'] = $('.tax_value').eq(34).text().replace(/ |\.|,|\$/g,'').trim();
+      }
 
       /*
         Property Information
