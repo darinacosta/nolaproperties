@@ -125,7 +125,7 @@ module.exports = (function() {
           console.log('Bad database connection.')
           defer.resolve('error');
         } else {
-          db.collection('features').find({"url" : url}).toArray(function(e, docs){
+          db.collection('features').find({"properties.ASSESSOR_URL" : url}).toArray(function(e, docs){
             assert.equal(e, null);
             if (docs.length === 0){
               defer.resolve(false);
