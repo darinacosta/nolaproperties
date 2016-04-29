@@ -84,7 +84,7 @@ module.exports = (function() {
       .then(function(state){
         if (state === 'error') {
           loop.next();
-        } else if (state === false){
+        } else if (state === true){
           console.log('    - ' + scraper.entries[i].number + ' ' + scraper.entries[i].street + ' already exists in database.')
           loop.next();
         } else {
