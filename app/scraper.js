@@ -72,9 +72,7 @@ module.exports = (function() {
       .then(function(state){
         if (state === 'error') {
           loop.next();
-        };
-
-        if (state){
+        } else if (state === false){
           console.log('    - ' + scraper.entries[i].number + ' ' + scraper.entries[i].street + ' already exists in database.')
           loop.next();
         } else {
@@ -214,11 +212,14 @@ module.exports = (function() {
       var $ = cheerio.load(html),
       newFeature = {},
       value = {},
+      transfer = {},
       propertyInformation = {},
       firstListedYear, secondListedYear, thirdListedYear;
+
       /*
         value - First Listed Year - .tax_value 0 - 8
       */
+
       firstListedYear = $('.tax_value').eq(0).text().replace(/ /g,'').trim();
       if (/^20*/.test(firstListedYear) == true){
         value[firstListedYear] = {};
@@ -264,6 +265,20 @@ module.exports = (function() {
         value[thirdListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(33).text().replace(/ |\.|,|\$/g,'').trim();
         value[thirdListedYear]['taxablevalue'] = $('.tax_value').eq(34).text().replace(/ |\.|,|\$/g,'').trim();
       }
+
+      /*
+        Transfer Information
+      */
+      var $prcClass = $('.prc_class');
+      var $transferTable;
+      for (var i = 0; i < prcClass.length; i ++){
+        var prcText = $prcClass[0].text();
+        if (prcText.indexOf('Sale/Transfer Information') > -1){
+          $transferTable = $prcClass[0];
+        }
+      }
+      for ($('.even')
+
 
       /*
         Property Information
