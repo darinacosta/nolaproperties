@@ -8,7 +8,9 @@ var assert = require('assert'),
     http = require("http"),
     MongoClient = require('mongodb').MongoClient,
     mongoUrl = 'mongodb://localhost:27017/',
-    Q = require("q");
+    Q = require("q"),
+    util = require('util');
+
 
 module.exports = (function() {
 
@@ -51,6 +53,16 @@ module.exports = (function() {
           scraper.loop,
           scraper.complete);
       });
+    };
+
+    scraper.fetchSingleListing = function(address) {
+      var locationObject = scraper.buildLocationObject(address);
+      scraper.download(locationObject.url)
+      .then(function(html) {
+        var listing = scraper.buildFeature(html, locationObject);
+        console.log('============\n'+ locationObject.url +'\n============');
+        console.log(util.inspect(listing, {showHidden: false, depth: null}));
+      })
     };
 
     scraper.getAddresses = function(){
@@ -160,21 +172,28 @@ module.exports = (function() {
       }
     };
 
+    scraper.buildLocationObject = function(address) {
+      var address = address.split(',');
+      var addressStringArray = address[0].split(/([0-9]+)/);
+      var addressNumber = addressStringArray[1];
+      var addressStreet = addressStringArray[2];
+      var url = scraper.generateUrlQuery(addressNumber, addressStreet);
+      var locationObject = {
+        number: addressNumber.trim(),
+        street: addressStreet.trim(),
+        address: addressNumber.trim() + ' ' + addressStreet.trim(),
+        x: address[1],
+        y: address[2],
+        url: url
+      };
+
+      return locationObject;
+    };
+
     scraper.buildLocationObjectArray = function(addresses) {
       var locationObjectArray = [];
       for (var i = 1; i < addresses.length; i ++) { //skip the header row
-        var addressStringArray = addresses[i][0].split(/([0-9]+)/);
-        var addressNumber = addressStringArray[1];
-        var addressStreet = addressStringArray[2];
-        var url = scraper.generateUrlQuery(addressNumber, addressStreet);
-        var locationObject = {
-          number: addressNumber.trim(),
-          street: addressStreet.trim(),
-          address: addressNumber.trim() + ' ' + addressStreet.trim(),
-          x: addresses[i][1],
-          y: addresses[i][2],
-          url: url
-        }
+        var locationObject = scraper.buildLocationObject(addresses[i]);
         locationObjectArray.push(locationObject);
       }
       return locationObjectArray;
@@ -208,12 +227,8 @@ module.exports = (function() {
       return url;
     };
 
-    scraper.buildFeature = function(html, feature){
-      var $ = cheerio.load(html),
-      newFeature = {},
-      value = {},
-      transfer = {},
-      propertyInformation = {},
+    scraper.getPropertyValueData = function($) {
+      var value = {},
       firstListedYear, secondListedYear, thirdListedYear;
 
       /*
@@ -266,20 +281,43 @@ module.exports = (function() {
         value[thirdListedYear]['taxablevalue'] = $('.tax_value').eq(34).text().replace(/ |\.|,|\$/g,'').trim();
       }
 
+      return value;
+
+    };
+
+    scraper.getTransferData = function($) {
+
       /*
         Transfer Information
       */
+
+      var transfer = {};
       var $prcClass = $('.prc_class');
-      var $transferTable;
-      for (var i = 0; i < prcClass.length; i ++){
-        var prcText = $prcClass[0].text();
+      var $transferTable, $rows;
+      $prcClass.each(function(i, el){
+        var prcText = $(this).text();
         if (prcText.indexOf('Sale/Transfer Information') > -1){
-          $transferTable = $prcClass[0];
+          $transferTable = $(this);
+          $rows = $transferTable.children('.odd, .even');
         }
+      });
+      if ($rows){
+        $rows.each( function(i, el) {
+          transfer[i] = {};
+          transfer[i]['transferDate'] = $(this).children('.sales_value').eq(0).text().trim();
+          transfer[i]['price'] = $(this).children('.sales_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
+          transfer[i]['grantor'] = $(this).children('.sales_value').eq(2).text().trim();
+          transfer[i]['grantee'] = $(this).children('.sales_value').eq(3).text().trim();
+          transfer[i]['notarialArchiveNumber'] = $(this).children('.sales_value').eq(4).text().trim();
+          transfer[i]['instrumentNumber'] = $(this).children('.sales_value').eq(5).text().trim();
+        })
       }
-      for ($('.even')
 
+      return transfer;
+    };
 
+    scraper.getPropertyInfo = function($) {
+      var propertyInformation = {};
       /*
         Property Information
       */
@@ -291,17 +329,35 @@ module.exports = (function() {
       propertyInformation['propertyClass'] = $('.owner_value').eq(6).text().trim();
       propertyInformation['sqFt'] = $('.owner_value').eq(9).text().trim();
 
+      return propertyInformation;
 
-      newFeature = {
-        value: value,
-        property: propertyInformation,
-        location: {
-          x: feature.x,
-          y: feature.y,
-          address: feature.number + ' ' + feature.street
+    };
+
+    scraper.buildFeature = function(html, feature){
+      var $ = cheerio.load(html);
+      var value = scraper.getPropertyValueData($);
+      var propertyInfo = scraper.getPropertyInfo($);
+      var transfer = scraper.getTransferData($);
+
+      var newFeature = {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [feature.y, feature.x]
         },
-        url: feature.url
+        "properties": {
+          "VALUE": value,
+          "PROPERTY_DETAILS": propertyInfo,
+          "TRANSFERS": transfer,
+          "LOCATION": {
+            "X": feature.x,
+            "Y": feature.y,
+            "ADDR": feature.number + ' ' + feature.street
+          },
+          "ASSESSOR_URL": feature.url
+        }
       };
+
 
       return newFeature;
 
