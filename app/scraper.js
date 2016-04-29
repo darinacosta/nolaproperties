@@ -101,7 +101,7 @@ module.exports = (function() {
       var defer = Q.defer();
       if (html !== undefined && html !== null) {
         feature = scraper.buildFeature(html, feature);
-        if (feature.property.taxBillNumber) {
+        if (feature.properties.PROPERTY_DETAILS['taxBillNumber']) {
           scraper.insertFeatureIntoDb(feature)
           .then(function(){
             defer.resolve()
@@ -150,7 +150,7 @@ module.exports = (function() {
 
         db.collection('features').insert(feature, function(e, records) {
           assert.equal(e, null);
-          console.log('    + ' + feature.property.locationAddress + ' entered into database.')
+          console.log('    + ' + feature.properties.PROPERTY_DETAILS.locationAddress + ' entered into database.')
           db.close();
           defer.resolve();
         });
@@ -173,7 +173,9 @@ module.exports = (function() {
     };
 
     scraper.buildLocationObject = function(address) {
-      var address = address.split(',');
+      if (typeof address === 'string') {
+        address = address.split(',');
+      }
       var addressStringArray = address[0].split(/([0-9]+)/);
       var addressNumber = addressStringArray[1];
       var addressStreet = addressStringArray[2];
