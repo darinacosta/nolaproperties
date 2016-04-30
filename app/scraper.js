@@ -124,14 +124,16 @@ module.exports = (function() {
         if (db === null){
           console.log('Bad database connection.')
           defer.resolve('error');
+          db.close();
         } else {
           db.collection('features').find({"properties.ASSESSOR_URL" : url}).toArray(function(e, docs){
             assert.equal(e, null);
             if (docs.length === 0){
               defer.resolve(false);
-              defer.resolve();
+              db.close();
             } else {
               defer.resolve(true);
+              db.close();
             }
           });
         }
