@@ -108,7 +108,7 @@ module.exports = (function() {
       var defer = Q.defer();
       if (html !== undefined && html !== null) {
         feature = scraper.buildFeature(html, feature);
-        if (feature.properties.PROPERTY_DETAILS['taxBillNumber']) {
+        if (feature.properties['taxBillNumber']) {
           scraper.insertFeatureIntoDb(feature)
           .then(function(){
             defer.resolve();
@@ -162,7 +162,7 @@ module.exports = (function() {
 
         db.collection('features').insert(feature, function(e, records) {
           assert.equal(e, null);
-          console.log('    + ' + feature.properties.PROPERTY_DETAILS.locationAddress +
+          console.log('    + ' + feature.properties.locationAddress +
                       ' entered into database.');
           db.close();
           defer.resolve();
@@ -242,9 +242,8 @@ module.exports = (function() {
       return url;
     };
 
-    scraper.getPropertyValueData = function($) {
-      var value = {},
-      firstListedYear, secondListedYear, thirdListedYear;
+    scraper.getPropertyValueData = function($, properties) {
+      var firstListedYear, secondListedYear, thirdListedYear;
 
       /*
         value - First Listed Year - .tax_value 0 - 8
@@ -252,15 +251,14 @@ module.exports = (function() {
 
       firstListedYear = $('.tax_value').eq(0).text().replace(/ /g,'').trim();
       if (/^20*/.test(firstListedYear) === true){
-        value[firstListedYear] = {};
-        value[firstListedYear]['landValue'] = $('.tax_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['buildingValue'] = $('.tax_value').eq(2).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['totalValue'] = $('.tax_value').eq(3).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['assessedLandValue'] = $('.tax_value').eq(4).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['assessedBuildingValue'] = $('.tax_value').eq(5).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['totalAssessedValue'] = $('.tax_value').eq(6).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(7).text().replace(/ |\.|,|\$/g,'').trim();
-        value[firstListedYear]['taxablevalue'] = $('.tax_value').eq(8).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'landValue'] = $('.tax_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'buildingValue'] = $('.tax_value').eq(2).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'totalValue'] = $('.tax_value').eq(3).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'assessedLandValue'] = $('.tax_value').eq(4).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'assessedBuildingValue'] = $('.tax_value').eq(5).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'totalAssessedValue'] = $('.tax_value').eq(6).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'homesteadExemptionValue'] = $('.tax_value').eq(7).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[firstListedYear + 'taxablevalue'] = $('.tax_value').eq(8).text().replace(/ |\.|,|\$/g,'').trim();
       }
 
       /*
@@ -268,15 +266,14 @@ module.exports = (function() {
       */
       secondListedYear = $('.tax_value').eq(13).text().replace(/ /g,'').trim();
       if (/^20*/.test(secondListedYear) === true){
-        value[secondListedYear] = {};
-        value[secondListedYear]['landValue'] = $('.tax_value').eq(14).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['buildingValue'] = $('.tax_value').eq(15).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['totalValue'] = $('.tax_value').eq(16).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['assessedLandValue'] = $('.tax_value').eq(17).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['assessedBuildingValue'] = $('.tax_value').eq(18).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['totalAssessedValue'] = $('.tax_value').eq(19).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(20).text().replace(/ |\.|,|\$/g,'').trim();
-        value[secondListedYear]['taxablevalue'] = $('.tax_value').eq(21).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'landValue'] = $('.tax_value').eq(14).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'buildingValue'] = $('.tax_value').eq(15).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'totalValue'] = $('.tax_value').eq(16).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'assessedLandValue'] = $('.tax_value').eq(17).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'assessedBuildingValue'] = $('.tax_value').eq(18).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'totalAssessedValue'] = $('.tax_value').eq(19).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'homesteadExemptionValue'] = $('.tax_value').eq(20).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[secondListedYear + 'taxablevalue'] = $('.tax_value').eq(21).text().replace(/ |\.|,|\$/g,'').trim();
       }
 
       /*
@@ -285,22 +282,21 @@ module.exports = (function() {
 
       thirdListedYear = $('.tax_value').eq(26).text().replace(/ /g,'').trim();
       if (/^20*/.test(secondListedYear) === true){
-        value[thirdListedYear] = {};
-        value[thirdListedYear]['landValue'] = $('.tax_value').eq(27).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['buildingValue'] = $('.tax_value').eq(28).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['totalValue'] = $('.tax_value').eq(29).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['assessedLandValue'] = $('.tax_value').eq(30).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['assessedBuildingValue'] = $('.tax_value').eq(31).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['totalAssessedValue'] = $('.tax_value').eq(32).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['homesteadExemptionValue'] = $('.tax_value').eq(33).text().replace(/ |\.|,|\$/g,'').trim();
-        value[thirdListedYear]['taxablevalue'] = $('.tax_value').eq(34).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'landValue'] = $('.tax_value').eq(27).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'buildingValue'] = $('.tax_value').eq(28).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'totalValue'] = $('.tax_value').eq(29).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'assessedLandValue'] = $('.tax_value').eq(30).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'assessedBuildingValue'] = $('.tax_value').eq(31).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'totalAssessedValue'] = $('.tax_value').eq(32).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'homesteadExemptionValue'] = $('.tax_value').eq(33).text().replace(/ |\.|,|\$/g,'').trim();
+        properties[thirdListedYear + 'taxablevalue'] = $('.tax_value').eq(34).text().replace(/ |\.|,|\$/g,'').trim();
       }
 
-      return value;
+      return properties;
 
     };
 
-    scraper.getTransferData = function($) {
+    scraper.getTransferData = function($, properties) {
 
       /*
         Transfer Information
@@ -318,43 +314,60 @@ module.exports = (function() {
       });
       if ($rows){
         $rows.each( function(i, el) {
-          transfer[i] = {};
-          transfer[i]['transferDate'] = $(this).children('.sales_value').eq(0).text().trim();
-          transfer[i]['price'] = $(this).children('.sales_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
-          transfer[i]['grantor'] = $(this).children('.sales_value').eq(2).text().trim();
-          transfer[i]['grantee'] = $(this).children('.sales_value').eq(3).text().trim();
-          transfer[i]['notarialArchiveNumber'] = $(this).children('.sales_value').eq(4).text().trim();
-          transfer[i]['instrumentNumber'] = $(this).children('.sales_value').eq(5).text().trim();
+          properties['transfer' + i + 'transferDate'] = $(this).children('.sales_value').eq(0).text().trim();
+          properties['transfer' + i + 'price'] = $(this).children('.sales_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
+          properties['transfer' + i + 'grantor'] = $(this).children('.sales_value').eq(2).text().trim();
+          properties['transfer' + i + 'grantee'] = $(this).children('.sales_value').eq(3).text().trim();
+          properties['transfer' + i + 'notarialArchiveNumber'] = $(this).children('.sales_value').eq(4).text().trim();
+          properties['transfer' + i + 'instrumentNumber'] = $(this).children('.sales_value').eq(5).text().trim();
         });
       }
 
-      return transfer;
+      return properties;
     };
 
-    scraper.getPropertyInfo = function($) {
-      var propertyInformation = {};
+    scraper.getPropertyInfo = function($, properties) {
       /*
         Property Information
       */
 
-      propertyInformation['owner'] = $('.owner_value').eq(0).text().trim();
-      propertyInformation['mailingAddress'] = $('.owner_value').eq(2).text().trim();
-      propertyInformation['locationAddress'] = $('.owner_value').eq(4).text().trim();
-      propertyInformation['taxBillNumber'] = $('.owner_value').eq(5).text().trim();
-      propertyInformation['propertyClass'] = $('.owner_value').eq(6).text().trim();
-      propertyInformation['sqFt'] = $('.owner_value').eq(9).text().trim();
+      properties['owner'] = $('.owner_value').eq(0).text().trim();
+      properties['mailingAddress'] = $('.owner_value').eq(2).text().trim();
+      properties['locationAddress'] = $('.owner_value').eq(4).text().trim();
+      properties['taxBillNumber'] = $('.owner_value').eq(5).text().trim();
+      properties['propertyClass'] = $('.owner_value').eq(6).text().trim();
+      properties['sqFt'] = $('.owner_value').eq(9).text().trim();
 
-      return propertyInformation;
+      return properties;
 
     };
 
     scraper.buildFeature = function(html, feature){
       var $ = cheerio.load(html);
-      var value = scraper.getPropertyValueData($);
-      var propertyInfo = scraper.getPropertyInfo($);
-      var transfer = scraper.getTransferData($);
       var wgs84Coords = proj4(laStatePlane, proj4.defs["WGS84"],
                               [feature.x, feature.y]);
+
+      var properties = (function(){
+
+        /*
+          TODO:
+          iteratively assembling property object is a shitty way of dealing
+          with this, come back to it.
+        */
+
+        var properties = {
+          "LOCATION": {
+            "X": feature.x,
+            "Y": feature.y,
+            "ADDR": feature.number + ' ' + feature.street
+          },
+          "ASSESSOR_URL": feature.url
+        };
+        var value = scraper.getPropertyValueData($, properties);
+        var propertyInfo = scraper.getPropertyInfo($, value);
+        var transfer = scraper.getTransferData($, propertyInfo);
+        return transfer;
+      })();
 
       var newFeature = {
         "type": "Feature",
@@ -362,22 +375,10 @@ module.exports = (function() {
           "type": "Point",
           "coordinates": wgs84Coords
         },
-        "properties": {
-          "VALUE": value,
-          "PROPERTY_DETAILS": propertyInfo,
-          "TRANSFERS": transfer,
-          "LOCATION": {
-            "X": feature.x,
-            "Y": feature.y,
-            "ADDR": feature.number + ' ' + feature.street
-          },
-          "ASSESSOR_URL": feature.url
-        }
+        "properties": properties
       };
 
-
       return newFeature;
-
     };
 
     scraper.testDb = function(){
