@@ -1,4 +1,2 @@
-var scraper = require('./app/scraper');
+var scraper = require('./scripts/scraper');
 scraper.init();
-
-

@@ -1,10 +1,10 @@
+"use strict";
+
 var assert = require('assert'),
     asyncHelper = require('./helpers/asyncHelper.js'),
     cheerio = require("cheerio"),
     csv = require("csv"),
-    csvParser = csv.parse();
     fs = require('fs'),
-    json2csv = require('json2csv'),
     http = require("http"),
     MongoClient = require('mongodb').MongoClient,
     mongoUrl = 'mongodb://localhost:27017/',
@@ -43,12 +43,11 @@ module.exports = (function() {
     scraper.problemAddresses = [];
 
     scraper.init = function() {
-      var addresses = scraper.getAddresses()
-      .then(function(addresses){
+      scraper.getAddresses().then(function(addresses){
         console.log(addresses.length + ' records will be processed.');
         scraper.entries = scraper.buildLocationObjectArray(addresses);
         var numberOfLoops = scraper.entries.length;
-        console.log('\nInitializing collection of (' + numberOfLoops + ') records...')
+        console.log('\nInitializing collection of (' + numberOfLoops + ') records...');
         asyncHelper.syncLoop(numberOfLoops,
           scraper.loop,
           scraper.complete);
@@ -62,7 +61,7 @@ module.exports = (function() {
         var listing = scraper.buildFeature(html, locationObject);
         console.log('============\n'+ locationObject.url +'\n============');
         console.log(util.inspect(listing, {showHidden: false, depth: null}));
-      })
+      });
     };
 
     scraper.getAddresses = function(){
@@ -79,13 +78,15 @@ module.exports = (function() {
 
     scraper.loop = function(loop){
       var i = loop.iteration();
-      console.log(' ' + i + '. ' + scraper.entries[i].url)
+      console.log(' ' + i + '. ' + scraper.entries[i].url);
       scraper.recordExists(scraper.entries[i].url)
       .then(function(state){
         if (state === 'error') {
           loop.next();
         } else if (state === true){
-          console.log('    - ' + scraper.entries[i].number + ' ' + scraper.entries[i].street + ' already exists in database.')
+          console.log('    - ' + scraper.entries[i].number + ' ' +
+                      scraper.entries[i].street +
+                      ' already exists in database.');
           loop.next();
         } else {
           scraper.download(scraper.entries[i].url)
@@ -94,7 +95,7 @@ module.exports = (function() {
             .then(loop.next);
           });
         }
-      })
+      });
     };
 
     scraper.handleScrapeProcedure = function(html, feature){
@@ -104,15 +105,17 @@ module.exports = (function() {
         if (feature.properties.PROPERTY_DETAILS['taxBillNumber']) {
           scraper.insertFeatureIntoDb(feature)
           .then(function(){
-            defer.resolve()
-          })
+            defer.resolve();
+          });
         } else {
-          console.log('    x url was not scraped. Ensure that the address exists in the assessor database.');
-          defer.resolve()
+          console.log('    x url was not scraped. Ensure that the address ' +
+                      'exists in the assessor database.');
+          defer.resolve();
         }
       } else {
-        console.log('    x url was not scraped. Ensure that the address exists in the assessor database.');
-        defer.resolve()
+        console.log('    x url was not scraped. Ensure that the address exists ' +
+                    ' in the assessor database.');
+        defer.resolve();
       }
       return defer.promise;
     };
@@ -122,11 +125,12 @@ module.exports = (function() {
       MongoClient.connect(scraper.config.db, function(e, db) {
 
         if (db === null){
-          console.log('Bad database connection.')
+          console.log('Bad database connection.');
           defer.resolve('error');
           db.close();
         } else {
-          db.collection('features').find({"properties.ASSESSOR_URL" : url}).toArray(function(e, docs){
+          db.collection('features').find({"properties.ASSESSOR_URL" : url})
+          .toArray(function(e, docs){
             assert.equal(e, null);
             if (docs.length === 0){
               defer.resolve(false);
@@ -146,13 +150,14 @@ module.exports = (function() {
       MongoClient.connect(scraper.config.db, function(e, db) {
 
         if (db === null){
-          console.log('Bad database connection.')
+          console.log('Bad database connection.');
           defer.resolve();
         }
 
         db.collection('features').insert(feature, function(e, records) {
           assert.equal(e, null);
-          console.log('    + ' + feature.properties.PROPERTY_DETAILS.locationAddress + ' entered into database.')
+          console.log('    + ' + feature.properties.PROPERTY_DETAILS.locationAddress +
+                      ' entered into database.');
           db.close();
           defer.resolve();
         });
@@ -162,15 +167,15 @@ module.exports = (function() {
     };
 
     scraper.complete = function(){
-      fs.writeFile(config.writeFile, JSON.stringify(entries));
       console.log("=======================================================");
       if (scraper.problemAddresses.length === 0) {
         console.log('All addresses were verified');
       } else {
         var addressPlural = scraper.problemAddresses.length === 1 ? 'address' : 'addresses';
-        console.log('The following (' + scraper.problemAddresses.length + ') '
-          + addressPlural + ' could not be verified: \n'
-          + JSON.stringify(scraper.problemAddresses))
+        console.log('The following (' + scraper.problemAddresses.length + ') ' +
+          addressPlural + ' could not be verified: \n' +
+          JSON.stringify(scraper.problemAddresses)
+        );
       }
     };
 
@@ -240,7 +245,7 @@ module.exports = (function() {
       */
 
       firstListedYear = $('.tax_value').eq(0).text().replace(/ /g,'').trim();
-      if (/^20*/.test(firstListedYear) == true){
+      if (/^20*/.test(firstListedYear) === true){
         value[firstListedYear] = {};
         value[firstListedYear]['landValue'] = $('.tax_value').eq(1).text().replace(/ |\.|,|\$/g,'').trim();
         value[firstListedYear]['buildingValue'] = $('.tax_value').eq(2).text().replace(/ |\.|,|\$/g,'').trim();
@@ -256,7 +261,7 @@ module.exports = (function() {
         value - Second Listed Year - .tax_value 13 - 25
       */
       secondListedYear = $('.tax_value').eq(13).text().replace(/ /g,'').trim();
-      if (/^20*/.test(secondListedYear) == true){
+      if (/^20*/.test(secondListedYear) === true){
         value[secondListedYear] = {};
         value[secondListedYear]['landValue'] = $('.tax_value').eq(14).text().replace(/ |\.|,|\$/g,'').trim();
         value[secondListedYear]['buildingValue'] = $('.tax_value').eq(15).text().replace(/ |\.|,|\$/g,'').trim();
@@ -273,7 +278,7 @@ module.exports = (function() {
       */
 
       thirdListedYear = $('.tax_value').eq(26).text().replace(/ /g,'').trim();
-      if (/^20*/.test(secondListedYear) == true){
+      if (/^20*/.test(secondListedYear) === true){
         value[thirdListedYear] = {};
         value[thirdListedYear]['landValue'] = $('.tax_value').eq(27).text().replace(/ |\.|,|\$/g,'').trim();
         value[thirdListedYear]['buildingValue'] = $('.tax_value').eq(28).text().replace(/ |\.|,|\$/g,'').trim();
@@ -314,7 +319,7 @@ module.exports = (function() {
           transfer[i]['grantee'] = $(this).children('.sales_value').eq(3).text().trim();
           transfer[i]['notarialArchiveNumber'] = $(this).children('.sales_value').eq(4).text().trim();
           transfer[i]['instrumentNumber'] = $(this).children('.sales_value').eq(5).text().trim();
-        })
+        });
       }
 
       return transfer;

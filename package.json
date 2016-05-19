@@ -24,7 +24,10 @@
     "karma-spec-reporter": "0.0.26",
     "mongodb": "^2.1.16",
     "phantomjs-prebuilt": "^2.1.7",
+    "proj4": "^2.3.14",
+    "proj4js-defs": "0.0.1",
     "q": "^1.4.1",
+    "reproject": "^1.1.1",
     "request": "^2.71.0",
     "watchify": "^3.7.0"
   },

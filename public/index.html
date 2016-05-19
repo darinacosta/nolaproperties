@@ -33,8 +33,8 @@
     <button id="zoom-in">Zoom in</button>
     <script>
     var laProj = new ol.proj.Projection({
-         code: 'EPSG:3452',
-         units: 'ft'
+         code: 'EPSG:900913',
+         units: 'm'
      });
       var map = new ol.Map({
         layers: [
@@ -49,9 +49,8 @@
           })
         }),
         view: new ol.View({
-          projection: laProj,
-          center: [0, 0],
-          zoom: 2
+          center: ol.proj.transform([90, 30], 'EPSG:4326', 'EPSG:3857'),
+          zoom: 7
         })
       });
 
