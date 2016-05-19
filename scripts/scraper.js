@@ -8,13 +8,19 @@ var assert = require('assert'),
     http = require("http"),
     MongoClient = require('mongodb').MongoClient,
     mongoUrl = 'mongodb://localhost:27017/',
+    proj4 = require('proj4'),
     Q = require("q"),
     util = require('util');
 
+// Louisiana State Plane
+var laStatePlane = "+proj=lcc +lat_1=30.7 +lat_2=29.3 +" +
+               "lat_0=28.5 +lon_0=-91.33333333333333 +x_0=999999.9999898402 +" +
+               "y_0=0 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +" +
+               "no_defs";
 
 module.exports = (function() {
 
-    var scraper = this;
+    var scraper = {};
 
     scraper.config = {
     	baseUrl: 'http://qpublic9.qpublic.net/la_orleans_display.php',
@@ -347,12 +353,14 @@ module.exports = (function() {
       var value = scraper.getPropertyValueData($);
       var propertyInfo = scraper.getPropertyInfo($);
       var transfer = scraper.getTransferData($);
+      var wgs84Coords = proj4(laStatePlane, proj4.defs["WGS84"],
+                              [feature.x, feature.y]);
 
       var newFeature = {
         "type": "Feature",
         "geometry": {
           "type": "Point",
-          "coordinates": [feature.y, feature.x]
+          "coordinates": wgs84Coords
         },
         "properties": {
           "VALUE": value,
